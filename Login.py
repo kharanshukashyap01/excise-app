@@ -9,8 +9,14 @@ from models import UserRole, Role, Dashboard
 app = Flask(__name__)
 CORS(app) 
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:Kharanshu23@localhost/gov_user_data'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/gov_user_data'
 db = SQLAlchemy(app)
+
+#app.config['SECRET_KEY'] = 'your_secret_key'
+#app.config['SQLALCHEMY_DATABASE_URI'] = (
+#    'mysql://sql12724333:b73ANejVQI@sql12.freesqldatabase.com:3306/sql12724333'
+#)
+#db = SQLAlchemy(app)
 
 # Enable CORS for all routes
 

@@ -1,5 +1,5 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9
+# Use an official Node.js runtime as a parent image
+FROM node:14
 
 # Set the working directory in the container
 WORKDIR /app
@@ -7,11 +7,11 @@ WORKDIR /app
 # Copy the current directory contents into the container
 COPY . .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Node.js dependencies
+RUN npm install
 
 # Expose the port on which the application will run
-EXPOSE 5000
+EXPOSE 3000
 
 # Command to run the app
-CMD ["sh", "-c", "python Login.py"]
+CMD ["npm", "start"]

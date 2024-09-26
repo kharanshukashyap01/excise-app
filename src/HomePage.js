@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import logo from "./images/logo.png";
 import "./HomePage.css";
 import LiquorSalesAnalysis from "./images/LiquorSalesAnalysis.png";
@@ -16,21 +15,37 @@ import WhatifAnalysis from "./images/WhatifAnalysis.png";
 import Chatbot from "./images/Chatbot.png";
 
 const HomePage = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const id = location.state?.id;
   const [activeViz, setActiveViz] = useState(null);
-  const [roles, setRoles] = useState([]);
   const [links, setLinks] = useState({});
 
-  useEffect(() => {
-    if (!id) {
-      navigate("/login");
-      return;
+  // Fetch link for each image from the API
+  const fetchLinkForImage = async (imageId) => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:5000/api/image-link/${imageId}`
+      );
+      if (response.ok) {
+        const link = await response.text(); // Get the plain text response (link)
+        setLinks((prevLinks) => ({
+          ...prevLinks,
+          [imageId]: link, // Set the link for the corresponding imageId
+        }));
+      } else {
+        console.error("Failed to fetch link for image:", imageId);
+      }
+    } catch (error) {
+      console.error("Error fetching link for image:", imageId, error);
     }
+  };
 
-    fetchRolesAndLinks(id);
+  useEffect(() => {
+    // Fetch links for all images when component mounts
+    images.forEach((image) => {
+      fetchLinkForImage(image.id);
+    });
+  }, []); // Empty dependency array ensures it runs once on mount
 
+  useEffect(() => {
     if (activeViz) {
       // Inject the Tableau script dynamically
       const script = document.createElement("script");
@@ -49,74 +64,7 @@ const HomePage = () => {
         vizContainer.innerHTML = "";
       };
     }
-  }, [id, activeViz, navigate]);
-
-  const fetchToken = async (userId) => {
-    try {
-      const user_id = parseInt(userId, 10);
-      const response = await fetch("http://127.0.0.1:5000/api/latest-token/3");
-      if (response.ok) {
-        const data = await response.json();
-        return data.token;
-      } else {
-        console.error("Failed to fetch token");
-      }
-    } catch (error) {
-      console.error("Error fetching token:", error);
-    }
-    return null;
-  };
-
-  const fetchRolesAndLinks = async (userId) => {
-    try {
-      const token = await fetchToken(userId);
-      if (token) {
-        const rolesResponse = await fetch(
-          `http://127.0.0.1:5000/api/users/${userId}/roles`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (rolesResponse.ok) {
-          const rolesData = await rolesResponse.json();
-          let rolesArray = [];
-
-          if (Array.isArray(rolesData.roles)) {
-            rolesArray = rolesData.roles.flatMap((role) =>
-              role.split(",").map((r) => r.trim())
-            );
-          } else if (typeof rolesData.roles === "string") {
-            rolesArray = rolesData.roles.split(",").map((r) => r.trim());
-          }
-
-          setRoles(rolesArray);
-
-          const linksResponse = await fetch(
-            `http://127.0.0.1:5000/api/roles-links/${userId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          if (linksResponse.ok) {
-            const linksData = await linksResponse.json();
-            setLinks(linksData);
-          } else {
-            console.error("Failed to fetch links");
-          }
-        } else {
-          console.error("Failed to fetch roles");
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching roles and links:", error);
-    }
-  };
+  }, [activeViz]);
 
   const images = [
     {
@@ -173,19 +121,13 @@ const HomePage = () => {
     { id: "Chatbot", src: Chatbot, alt: "Chatbot" },
   ];
 
-  const filteredImages = images.filter((image) => roles.includes(image.id));
-
   const handleImageClick = (link) => {
     setActiveViz(link);
+    console.log("ActiveViz set to:", link); // Debugging statement
   };
 
   const handleCloseViz = () => {
     setActiveViz(null);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
   };
 
   return (
@@ -206,9 +148,6 @@ const HomePage = () => {
         <button className="nav-button">About Us</button>
         <button className="nav-button">Directory</button>
         <button className="nav-button">Contact Us</button>
-        <button className="nav-button" onClick={handleLogout}>
-          Logout
-        </button>
         <button className="nav-button">Recruitment</button>
         <button className="nav-button">Administration Dashboard</button>
         <button className="nav-button">Mobile App</button>
@@ -228,31 +167,25 @@ const HomePage = () => {
           </div>
         ) : (
           <div className="image-grid">
-            {filteredImages.map((image, index) => (
+            {images.map((image, index) => (
               <div
                 key={image.id}
                 className={`image-item ${
                   index === images.length - 1 ? "align-left" : ""
                 }`}
               >
-                {links[image.id] ? (
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="clickable-image"
-                    onClick={() =>
-                      handleImageClick(
-                        `https://va.rajasthan.gov.in/views${links[image.id]}`
-                      )
-                    }
-                  />
-                ) : (
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="clickable-image"
-                  />
-                )}
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  className="clickable-image"
+                  onClick={() =>
+                    handleImageClick(
+                      `https://va.rajasthan.gov.in/views${
+                        links[image.id] || ""
+                      }`
+                    )
+                  }
+                />
               </div>
             ))}
           </div>

@@ -1,29 +1,18 @@
 version: "3.8"
 
 services:
-  app:
+  backend:
     build: .
-    depends_on:
-      - db
+    container_name: backend_container
+    restart: always
     environment:
-      - MYSQL_HOST=db
-      - MYSQL_PORT=3306
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=Kharanshu23
-      - MYSQL_DB=gov_user_data
+      DATABASE_URL: mysql+pymysql://sql12724333:b73ANejVQI@sql12.freesqldatabase.com:3306/sql12724333
     ports:
       - "5000:5000"
 
-  db:
-    image: mysql:8.0
+  frontend:
+    build: .
+    container_name: frontend_container
     restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: Kharanshu23
-      MYSQL_DATABASE: gov_user_data
     ports:
-      - "3307:3306"
-    volumes:
-      - db_data:/var/lib/mysql
-
-volumes:
-  db_data:
+      - "3000:3000"
